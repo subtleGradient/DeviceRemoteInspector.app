@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>Dri</title>
+
+<script>onload = function(){
+  var timeStamp = Date.now()
+  commands.location = 'commands.html?_=' + timeStamp
+  inspector.location = 'inspector.html?_=' + timeStamp
+}</script>
+
+<frameset cols="286, *">
+  <frame id=commandsFrame name=commands>
+  <frame id=inspectorFrame name=inspector>
+</frameset>

@@ -1,0 +1,205 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>Dri</title>
+
+<style>
+html{font-family:"Lucida Grande";font-size:12px;background:#E8E8E8;}
+body{margin:0;padding:1ex;}
+
+#inspectorTabs{width:100%;overflow:hidden;margin:0 -1ex;padding:0 1ex;}
+#inspectorTabs>div{line-height:1.5em;margin-top:.75em;}
+
+#inspectorTabs>div:before{content:attr(data-title);font-weight:bold;}
+#inspectorTabs a:before{content:"👉";}
+
+#inspectorTabs a {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+  color:#555;
+}
+#inspectorTabs a.on{background-color:rgb(56,121,217);color:#fff;margin:0 -1ex;padding:0 1ex;}
+#inspectorTabs a[data-is-data-url="true"]{}
+html:not(.showAllInspectorLinks) #inspectorTabs a[data-is-data-url="true"]{display:none;}
+html:not(.showAllInspectorLinks) #inspectorTabs a.other{display:none;}
+
+.offline .online{opacity:0.5;pointer-events:none;}
+
+input{-webkit-box-sizing:border-box;}
+
+.actions{
+  position:fixed;
+  top:auto;
+  right:0;
+  bottom:0;
+  left:0;
+  
+  background-color:#E8E8E8;
+}
+.deviceActions {
+  text-align:center;
+  background-color: #555;
+  color: #fff;
+  overflow:hidden;
+  border-bottom:1px solid #111;
+  -webkit-box-shadow:inset 0 0 16px #333;
+}
+.actions.deviceActions{
+  -webkit-box-shadow:
+    0 -10px 10px #E8E8E8,
+    inset 0 0 16px #333
+  ;
+}
+body{margin-bottom:8em;}
+
+</style>
+<script src="lib/hook.js"></script>
+<script>
+
+hook.onAny(function(data, callback, source){
+  console.log(Date.now() - $timestamp, this.event, data, callback, source)
+  $timestamp = Date.now()
+})
+
+var $timestamp = Date.now()
+
+top.hook = hook
+
+onload = function(){
+  hook.once('hook::ready', function(){
+    hook.emit('loaded')
+  })
+}
+
+var uiState = document.documentElement.classList
+
+hook.on('Dri.app::version', function(version){
+  top.document.title += ' ' + version
+})
+hook.on('android-isConnected::adb::disconnected', offline)
+hook.on('android-isConnected::adb::connected', online)
+
+var oldInspectorUrl = null
+
+function online(){
+  console.log('online')
+  if (oldInspectorUrl) {
+    top.inspector.location = oldInspectorUrl
+  }
+  uiState.remove('offline')
+  uiState.add('online')
+  isConnectedView.checked = true
+}
+function offline(){
+  console.log('offline')
+  uiState.remove('online')
+  uiState.add('offline')
+  
+  oldInspectorUrl = top.inspector.location.href
+  
+  isConnectedView.checked = false
+}
+
+emitOnConnection._mapping = {}
+function emitOnConnection(eventName, data, callback, _shouldEmitOccasionally){
+  if (arguments.length === 1) return delete emitOnConnection._mapping[eventName]
+  emitOnConnection._mapping[eventName] = {data:data, callback:callback, _shouldEmitOccasionally:_shouldEmitOccasionally}
+  hook.emit(eventName, data, callback)
+}
+hook.on('android-isConnected::adb::connected', function(){
+  Object.keys(emitOnConnection._mapping).forEach(function(eventName){
+    var mapping = emitOnConnection._mapping[eventName]
+    hook.emit(eventName, mapping.data, mapping.callback)
+  })
+})
+hook.on('occasion', function(){
+  Object.keys(emitOnConnection._mapping).forEach(function(eventName){
+    var mapping = emitOnConnection._mapping[eventName]
+    if (!mapping._shouldEmitOccasionally) return
+    hook.emit(eventName, mapping.data, mapping.callback)
+  })
+})
+function reEmit(eventName){
+  var mapping = emitOnConnection._mapping[eventName]
+  hook.emit(eventName, mapping.data, mapping.callback)
+}
+
+function emitOnOccasion(eventName, data, callback){
+  emitOnConnection(eventName, data, callback, true)
+}
+
+var occasionalTimer
+hook.on('android-isConnected::adb::disconnected', function(){ clearInterval(occasionalTimer) })
+hook.on('android-isConnected::adb::connected', function(){ occasionalTimer = setInterval(function(){hook.emit('occasion', Date.now())}, 45e3) })
+
+
+</script>
+
+<iframe style=display:none name=commandLog></iframe>
+
+<footer style="text-align:right;padding-right:1ex;">
+  <!-- <button class=online onclick="hook.emit('execute::open-prefs')">Edit Prefs</button> -->
+  <!-- <label>Show&nbsp;All&nbsp;<input type=checkbox onchange="uiState[checked?'add':'remove']('showAllInspectorLinks')"></label> -->
+</footer>
+
+<section class="actions deviceActions">
+  <p>
+    <label>Connected&nbsp;<input disabled readonly id=isConnectedView type=checkbox></label>
+  </p>
+</section>
+
+<section id=inspectorTabs>
+  <div id=availableSockets-template></div>
+  <div id=availableSockets9222 data-title="Chrome"></div>
+  <a target=inspector href=http://localhost:9222>All Inspectors</a>
+    <!--
+    <form action=http://localhost:9090/open_url target=commandLog>
+      <label><input title="app_assets" placeholder="open url on device" type=url name=url value=http://127.0.0.1:1233/apps style="width:100%"></label>
+    </form>
+    <form action=http://localhost:9090/open_url target=commandLog>
+      <label><input title="~/Sites" placeholder="open url on device" type=url name=url value=http://127.0.0.1:1232/ style="width:100%"></label>
+    </form>
+    -->
+</section>
+<script>
+new function initAvailableSockets(){
+  
+  var templateElement = document.getElementById('availableSockets-template')
+  
+  hook.on('available-sockets::*::changed', function(data){
+    // isConnectedView.checked = !!data
+    
+    if (!Array.isArray(data)) data = []
+    
+    var port = this.event.match(/::(\d+)::/)[1]
+    var id = 'availableSockets' + port
+    var element = document.getElementById(id)
+    if (!element) {
+      element = templateElement.cloneNode(true)
+      element.id = id
+      element.setAttribute('data-title', port)
+      templateElement.parentElement.appendChild(element)
+    }
+    element.innerHTML = ''
+    var dataUrlIndex = 0
+    data.forEach(function(data){
+      console.log(data)
+      if (!data.webSocketDebuggerUrl) return
+      var url = 'lib/devtools_frontend/devtools.html?ws=' + data.webSocketDebuggerUrl.replace('ws://','localhost:' + port)
+      var name = data.title || data.url.split('/').reverse()[0]
+      name = name.replace(/\/index.html\??$/,'')
+      var isDataURL = name.indexOf('data:') === 0
+      
+      element.innerHTML += ''
+        // + '<a target=inspector href="http://' + data.host +'?page='+ data.page + '&experiments=true">Device</a>'
+        + '<a target=inspector href="' + url + '&experiments=true" data-is-data-url='+isDataURL+' onclick="this.classList.add(\'on\');window.selectedElement={'+id+':this}">'
+        + (isDataURL? "Data " + (dataUrlIndex++) : name)
+        + '</a>'
+    })
+    if (window.selectedElement && window.selectedElement[id]) element.insertBefore(window.selectedElement[id], element.firstChild)
+  })
+}
+</script>

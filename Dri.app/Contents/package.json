@@ -1,0 +1,17 @@
+{
+  "name":"Dri.app",
+  "version":"0.7.0",
+  "dependencies":{
+    "hook.io":">= 0.8.9",
+    "hook.io-herd":">= 0.2.5",
+    "request":">= 2.9.x",
+    "connect":">= 2.1.3"
+    ,
+    "dnode":  "0.9.x",
+    "colors": "*",
+    "node-static": "0.5.x"
+  },
+  "disabled dependencies":{
+    "hook.io-webserver":">= 0.8.1"
+  }
+}
