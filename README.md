@@ -1,6 +1,8 @@
 # Dri.app
 ## Device Remote Inspector
 
+*Note: If you download this app from as a zip, you'll need to rename the folder `subtleGradient-DeviceRemoteInspector.app-5a418c8` to `DeviceRemoteInspector.app` or else Mac OS X won't understand how to launch it.*
+
 **The easiest way to inspect mobile web apps on your device.**
 
 1. **Connect** device to your computer
