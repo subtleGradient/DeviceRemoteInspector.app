@@ -1,0 +1,34 @@
+<html>
+
+  <head>
+    <script type="text/javascript" src="./hook.js"></script>
+
+    <script type="text/javascript">
+
+    // This seems to get hit twice.
+    hook.on('hook::ready', function() {
+
+      setInterval(function ping() {
+        hook.emit('ping', function (err, place) {
+          document.getElementById("place").innerHTML = 'hello ' + place + '!';
+        });
+      }, 2000);
+
+      hook.on('*::pong', function (data, cb) {
+        cb(null, 'I\'m '+hook.name+' and you ponged me ?')
+      })
+
+    });
+
+    </script>
+  </head>
+  
+  <body>
+    <h1>Welcome to hook.io-webserver, it worked!</h1>
+    <h2>You've now got a running websocket server waiting for connections!</h2>
+    hook.io-webserver is meant to be low-level and minimal. You probably want to check out <a href="http://github.com/hookio/hook.js/">hook.js</a>
+    <h1><span id="place">loading...</span></h1>
+  </body>
+
+</html>
+

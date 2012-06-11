@@ -1,0 +1,69 @@
+//
+// A simple CLI tool for helping to browserify ./lib/hookio/browser/build/hook.js
+//
+
+var browserify = require('browserify'),
+    colors     = require('colors'),
+    path       = require('path'),
+    fs         = require('fs');
+
+//
+// In-case the generation script breaks,
+// throw a friendly error
+//
+process.on('uncaughtException', function(err){
+  console.log('error generating hook.js script!\n'.red + err.message.red);
+  process.exit();
+});
+
+var bundle = browserify();
+
+console.log('Generating browser bundle...'.yellow);
+
+//
+// Use ES5 shim for older browsers
+//
+bundle.use(require('shimify'));
+
+//
+// Require the main node.js entry point
+//
+bundle.require(path.resolve(
+  __dirname, '..', 'lib', 'hookio', 'browser', 'hook-shim.js'
+), { target:"/hook.js"});
+
+//
+// Read in some comments specifically for the browser,
+// we'll prepend these to the browserified output
+//
+var comments = fs.readFileSync(path.resolve(
+  __dirname, '..', 'lib', 'hookio', 'browser', 'comments.js'
+)).toString();
+comments     = comments.replace(/{{newDate}}/, new Date());
+comments     = comments.replace(/{{newDateUnix}}/, new Date().getTime());
+
+//
+// Read in contructor block for browser
+// we'll append this to the browserified output
+//
+var constructor = fs.readFileSync(path.resolve(
+  __dirname, '..', 'lib', 'hookio', 'browser', 'constructor.js'
+)).toString();
+
+
+
+//
+// TODO: Also create a minified bundle using:
+//       filter : require('uglify-js')
+
+
+//
+// Output the browser version of hook.io, hook.js
+//
+
+fs.writeFileSync(path.resolve(
+  __dirname, '..', 'lib', 'hookio', 'browser', 'build', 'hook.js'
+), comments + bundle.bundle() + constructor);
+
+console.log('Generated: '.green + 'hook.js'.magenta);
+

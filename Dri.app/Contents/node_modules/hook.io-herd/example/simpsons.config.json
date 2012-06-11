@@ -1,0 +1,11 @@
+{
+  "src":"../lib/herd",
+  "name":"Simpsons",
+  "childHooks":[
+    {"type":"helloworld", "name":"Homer"},
+    {"type":"helloworld", "name":"Marge"},
+    {"configFilePath":"./simpson-kids/bart.config.json"},
+    {"configFilePath":"./simpson-kids/lisa.config.json"},
+    {"configFilePath":"./simpson-kids/maggie.config.json"}
+  ]
+}

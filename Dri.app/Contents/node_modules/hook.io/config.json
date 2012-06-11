@@ -1,0 +1,11 @@
+{
+  "test": {
+    "foo": "hello config"
+  },
+
+  "logger" : {
+    "transports" : {
+      "console" : {}
+    }
+  }
+}
