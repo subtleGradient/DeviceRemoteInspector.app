@@ -34,6 +34,13 @@ exports.childHooks.push({
   "bin": adb
 })
 
+exports.childHooks.push({
+  "name": "android-monkey",
+  "src": require.resolve("../lib/hook.io-android-monkey"),
+  "setupEventName": "android-devices::connected",
+  "bin": adb
+})
+
 /*
 exports.childHooks.push({
   "src": require.resolve("../lib/hook.io-exec"),
