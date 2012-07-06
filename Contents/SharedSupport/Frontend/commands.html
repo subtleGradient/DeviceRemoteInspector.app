@@ -59,10 +59,10 @@ body{margin-bottom:8em;}
 <script src="lib/hook.js"></script>
 <script>
 
-hook.onAny(function(data, callback, source){
-  console.log(Date.now() - $timestamp, this.event, data, callback, source)
-  $timestamp = Date.now()
-})
+// hook.onAny(function(data, callback, source){
+//   console.log(Date.now() - $timestamp, this.event, data, callback, source)
+//   $timestamp = Date.now()
+// })
 
 var $timestamp = Date.now()
 
@@ -135,6 +135,7 @@ var occasionalTimer
 hook.on('android-isConnected::adb::disconnected', function(){ clearInterval(occasionalTimer) })
 hook.on('android-isConnected::adb::connected', function(){ occasionalTimer = setInterval(function(){hook.emit('occasion', Date.now())}, 45e3) })
 
+top.inspector && top.inspector.initWithHook && top.inspector.initWithHook(hook)
 
 </script>
 
@@ -149,6 +150,33 @@ hook.on('android-isConnected::adb::connected', function(){ occasionalTimer = set
   <p>
     <label>Connected&nbsp;<input disabled readonly id=isConnectedView type=checkbox></label>
   </p>
+
+  <div>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_BACK')" title=Back>←</button>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_HOME')" title=Home>↖</button>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_MENU')" title=Menu>🎨</button>
+    <br>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_TAB')" title=tab>⇥</button>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_ENTER')" title=enter>↩</button>
+    <br>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_TAB')" title=tab>⇥</button>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_DEL')" title="Backspace">Backspace</button>
+    <br>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_DPAD_UP')" title="Up">Up</button>
+    <br>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_DPAD_LEFT')" title="Left">Left</button>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_DPAD_CENTER')" title="Center">Center</button>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_DPAD_RIGHT')" title="Right">Right</button>
+    <br>
+    <button onclick="hook.emit('monkey::*::do', 'press KEYCODE_DPAD_DOWN')" title="Down">Down</button>
+    <br>
+    <button onclick="hook.emit('monkey::*::do', ['press KEYCODE_DPAD_DOWN', 'press KEYCODE_DPAD_CENTER', 'sleep .25', 'press KEYCODE_BACK'].join('\n'))" title="Down">Test 1</button>
+  </div>
+
+  <form onsubmit="hook.emit('monkey::*::do', 'type ' + text_to_type.value); return false">
+    <input name=text_to_type>
+  </form>
+
 </section>
 
 <section id=inspectorTabs>
