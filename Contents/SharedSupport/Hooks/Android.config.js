@@ -28,6 +28,12 @@ exports.childHooks.push({
   }
 })
 
+exports.childHooks.push({
+  "name": "android-devices",
+  "src": require.resolve("../lib/hook.io-adb-devices"),
+  "bin": adb
+})
+
 /*
 exports.childHooks.push({
   "src": require.resolve("../lib/hook.io-exec"),
