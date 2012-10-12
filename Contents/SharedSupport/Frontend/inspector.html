@@ -9,10 +9,24 @@ html{background:#333}
 <!-- <script src="lib/monkey keycodes.js"></script> -->
 <script>
 
-var hook = (top.commands && top.commands.hook) || {emit:function(){}}
+var $DeviceSerialNumber = '*'
+
+var hook = {emit:function(){}}
+if (top.commands && top.commands.hook) initWithHook(top.commands.hook)
 
 function initWithHook(_hook){
   hook = _hook
+  hook.on('android-devices::connections::changed', function(connections){
+    var html = ''
+    connections = connections.split(',')
+    connections.unshift('*')
+    for (var index=-1, serial; serial = connections[++index];) {
+      html += '<option value=' + serial + (serial == $DeviceSerialNumber ?' selected':'') +'>'
+            +   serial
+            + '</option>'
+    }
+    $DeviceSerialNumberSelect.innerHTML = html
+  })
 }
 
 monkey.shouldRecord = true
@@ -20,7 +34,11 @@ monkey.shouldDoItLive = true
 function monkey(command){
   if (Array.isArray(command)) command = command.join('\n');
   weakMonkey(command)
-  if (monkey.shouldDoItLive) hook.emit('monkey::*::do', command);
+  if (monkey.shouldDoItLive) strongMonkey(command)
+}
+
+function strongMonkey(command){
+  hook.emit('monkey::' + $DeviceSerialNumber + '::do', command);
 }
 
 weakMonkey.MAX_TIMEOUT = 1000
@@ -55,18 +73,34 @@ function slowerMonkey(){
   })
 }
 
+monkeyKey.CommandForKeyId = {
+  "Up":"press KEYCODE_DPAD_UP",
+  "Down":"press KEYCODE_DPAD_DOWN",
+  "Left":"press KEYCODE_DPAD_LEFT",
+  "Right":"press KEYCODE_DPAD_RIGHT",
+  "U+0020"/*space*/:"press KEYCODE_DPAD_CENTER",
+  "Enter":"press KEYCODE_DPAD_CENTER",
+  "U+0008"/*backspace*/:"press KEYCODE_BACK",
+}
+function monkeyKey(keyIdentifier){
+  var command = monkeyKey.CommandForKeyId[keyIdentifier]
+  if (!command) return false
+  strongMonkey(command)
+  return true
+}
 
 </script>
 
-<section style="display:inline-block; text-align:center">
+<section style="display:inline-block; text-align:center; color:white">
   
+  <label><select id=$DeviceSerialNumberSelect onchange="$DeviceSerialNumber = value"></select> Device Serial Number</label><br>
   <label><input type=checkbox checked onchange="monkey.shouldRecord = checked"> Record?!</label>
   <label><input type=checkbox checked onchange="monkey.shouldDoItLive = checked"> Do It Live?!</label>
   
   
   <div>
-    <button onclick="monkey('press KEYCODE_BACK')" title=Back>←</button>
-    <button onclick="monkey('press KEYCODE_HOME')" title=Home>↖</button>
+    <button onclick="monkey('press KEYCODE_BACK')" title=Back>⬅</button>
+    <button onclick="monkey('press KEYCODE_HOME')" title=Home>🏠</button>
     <button onclick="monkey('press KEYCODE_MENU')" title=Menu>🎨</button>
     <button onclick="monkey('press KEYCODE_APP_SWITCH')">App Switch</button>
     <br>
@@ -91,7 +125,7 @@ function slowerMonkey(){
   <form onsubmit="monkey('type ' + text_to_type.value); return false"><input name=text_to_type></form>
 
 
-<form onsubmit="hook.emit('monkey::*::do', text_to_type.value); return false">
+<form onsubmit="strongMonkey(text_to_type.value); return false">
   <textarea style="font-size:8px" id=commandText autofocus rows=100 cols=50 name=text_to_type># Type monkey commands here!
 wake
 </textarea><br>
@@ -103,6 +137,33 @@ wake
 </form>
 
 </section>
+
+<div style="background:#eee; display:inline-block; vertical-align:top" tabindex=0
+  onkeydown="return !monkeyKey(event.keyIdentifier)"
+>
+  <img style="position:relative; background:#555" height=320 width=240 alt="Click and drag here to send touches"
+    onmouseout="
+      this._down && onmouseup(event)
+    "
+    onmousedown="
+      monkey('touch down ' + event.offsetX + ' ' + event.offsetY);
+      this._down = true;
+    "
+    onmousemove="
+      if (!this._down) return
+      monkey('touch move ' + event.offsetX + ' ' + event.offsetY);
+    "
+    onmouseup="
+      monkey('touch up ' + event.offsetX + ' ' + event.offsetY);
+      this._down = false
+    "
+  >
+  <footer style="text-align:center">
+    <button onclick="monkey('press KEYCODE_BACK')" title=Back>⬅</button>
+    <button onclick="monkey('press KEYCODE_HOME')" title=Home>🏠</button>
+    <button onclick="monkey('press KEYCODE_MENU')" title=Menu>🎨</button>
+  </footer>
+</div>
 
 <img style="position:relative; background:#555" height=1184 width=720 alt="Click and drag here to send touches"
   onmouseout="
