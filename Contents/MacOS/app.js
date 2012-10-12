@@ -132,7 +132,7 @@ driApp.once('ui::started', function setupAppAssetsServer(){
   var app_assets = driApp.preferences.get('app_assets')
   var app_assets_port = driApp.preferences.get('app_assets_port', 1233)
   
-  if (path.existsSync(app_assets)) return initStaticServer(app_assets, app_assets_port)
+  if (fs.existsSync(app_assets)) return initStaticServer(app_assets, app_assets_port)
   
   CocoaDialog.exec([
     "fileselect",
@@ -230,7 +230,7 @@ function initAvailableSockets(model){
 /*
 function initStaticServer(WEBROOT, PORT){
   console.log('initStaticServer', PORT, WEBROOT)
-  if (!path.existsSync(WEBROOT)){
+  if (!fs.existsSync(WEBROOT)){
     console.error("Path doesn't exist:", WEBROOT)
     return false
   }
